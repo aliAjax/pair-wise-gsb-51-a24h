@@ -32,6 +32,9 @@ def main() -> None:
     args = parse_args()
     Path(args.db).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
     service = build_service(args.db)
+    backfill = service.backfill_on_startup()
+    if backfill["total"]:
+        print("历史履约节点回填：%s条记录" % backfill["total"], flush=True)
     server = create_server(args.host, args.port, service, BASE_DIR / "static")
     print("住房贷款纾困申请与履约跟踪 listening on http://%s:%s" % (args.host, args.port), flush=True)
     try:

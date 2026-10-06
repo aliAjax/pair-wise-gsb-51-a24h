@@ -25,5 +25,6 @@ class WorkflowTest(unittest.TestCase):
             record = self.service.act(Actor("operator", role), record["id"], record["version"], action, data)
             self.assertEqual(record["state"], expected_state)
         timeline = self.service.timeline(Actor("creator", "intake_officer"), record["id"])
-        self.assertEqual(len(timeline), len(FLOW) + 1)
+        # created + 各动作 + 生效时生成履约节点事件
+        self.assertEqual(len(timeline), len(FLOW) + 2)
         self.assertEqual(timeline[-1]["action"], FLOW[-1][0])

@@ -17,17 +17,29 @@
   <h1>住房贷款纾困申请与履约跟踪</h1>
   <p>最小演示页。完整业务流程通过README中的JSON接口调用。</p>
   <div class="row"><button id="load">加载记录</button><button id="stats">查看状态统计</button></div>
+  <div class="row" style="margin-top:.6rem">
+    <input id="recordId" type="number" min="1" value="1" style="width:7rem" placeholder="记录ID">
+    <button id="ledger">查看履约台账</button>
+    <button id="revisions">查看修订痕迹</button>
+    <button id="backfill">回填历史节点</button>
+  </div>
   <pre id="output">点击上方按钮读取服务状态。</pre>
 </main>
 <script>
 const headers = {"X-User-Id":"demo-admin","X-Role":"admin","X-Org":"demo"};
-async function show(path) {
-  const response = await fetch(path, {headers});
+async function show(path, options) {
+  const response = await fetch(path, Object.assign({headers}, options));
   const data = await response.json();
   document.getElementById("output").textContent = JSON.stringify(data, null, 2);
 }
 document.getElementById("load").onclick = () => show("/api/records?limit=20");
 document.getElementById("stats").onclick = () => show("/api/stats");
+document.getElementById("ledger").onclick = () =>
+  show(`/api/records/${document.getElementById("recordId").value}/ledger`);
+document.getElementById("revisions").onclick = () =>
+  show(`/api/records/${document.getElementById("recordId").value}/ledger/revisions`);
+document.getElementById("backfill").onclick = () =>
+  show("/api/ledger/backfill", {method: "POST"});
 </script>
 </body>
 </html>
