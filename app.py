@@ -17,7 +17,10 @@ DEFAULT_PORT = 8327
 def build_service(db_path: str) -> Service:
     repository = Repository(db_path)
     audit = AuditRecorder(repository)
-    return Service(repository, DomainRules(), audit)
+    service = Service(repository, DomainRules(), audit)
+    # 历史方案缺履约节点的按方案参数回填，幂等
+    service.backfill_ledger()
+    return service
 
 
 def parse_args():

@@ -12,6 +12,9 @@ from .domain import Actor, DomainError, PermissionDenied, ValidationError
 RECORD_RE = re.compile(r"^/api/records/(\d+)$")
 ACTION_RE = re.compile(r"^/api/records/(\d+)/actions/([a-z_]+)$")
 AUDIT_RE = re.compile(r"^/api/records/(\d+)/audit$")
+LEDGER_RE = re.compile(r"^/api/records/(\d+)/ledger$")
+LEDGER_AMEND_RE = re.compile(r"^/api/records/(\d+)/ledger/amend$")
+REVISIONS_RE = re.compile(r"^/api/records/(\d+)/revisions$")
 
 
 def make_handler(service: Any, static_dir: Path):
@@ -84,6 +87,14 @@ def make_handler(service: Any, static_dir: Path):
                 if match:
                     self._send(200, {"items": service.timeline(self._actor(), int(match.group(1)))})
                     return
+                match = LEDGER_RE.match(parsed.path)
+                if match:
+                    self._send(200, service.ledger(self._actor(), int(match.group(1))))
+                    return
+                match = REVISIONS_RE.match(parsed.path)
+                if match:
+                    self._send(200, service.revisions(self._actor(), int(match.group(1))))
+                    return
                 if parsed.path == "/api/stats":
                     self._send(200, service.stats(self._actor()))
                     return
@@ -106,6 +117,20 @@ def make_handler(service: Any, static_dir: Path):
                         raise ValidationError("expected_version必须是整数")
                     record = service.act(self._actor(), int(match.group(1)), version, match.group(2), body.get("data", {}))
                     self._send(200, record)
+                    return
+                match = LEDGER_AMEND_RE.match(parsed.path)
+                if match:
+                    version = body.get("expected_version")
+                    if not isinstance(version, int):
+                        raise ValidationError("expected_version必须是整数")
+                    self._send(200, service.amend_payment(self._actor(), int(match.group(1)), version, body.get("data", {})))
+                    return
+                match = LEDGER_RE.match(parsed.path)
+                if match:
+                    version = body.get("expected_version")
+                    if not isinstance(version, int):
+                        raise ValidationError("expected_version必须是整数")
+                    self._send(200, service.report_payment(self._actor(), int(match.group(1)), version, body.get("data", {})))
                     return
                 self._send(404, {"error": "not_found", "message": "路径不存在"})
             except Exception as exc:
